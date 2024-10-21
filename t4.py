@@ -25,17 +25,15 @@ def main():
         frequency_column=frequency_column)
     
     # Prepare dataset info for plotting
-    datasets_info = [
-        {
-            'data': data1,
-            'label': 'S11 Hole Patch Antenna',
-            'frequency_column': 'Freq [GHz]',
-            's11_column': 'dB(ActiveS(1:1)) []',
-            'marker': '',
-            'linestyle': '-',
-            'color': 'red',
-        }
-    ]
+    datasets_info = [{
+        'data': data1,
+        'label': 'S11 Hole Patch Antenna',
+        'frequency_column': 'Freq [GHz]',
+        's11_column': 'dB(ActiveS(1:1)) []',
+        'marker': '',
+        'linestyle': '-',
+        'color': 'red',
+    }]
     
     
     # Plot the S11 data
