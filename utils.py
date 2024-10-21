@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import re
 
 
 def load_s11_data(file_path, delimiter=',', decimal='.', frequency_column='Frequency', s11_column='S11-Gain (dB)', frequency_factor=1):
@@ -96,57 +97,85 @@ def load_s11_parametric_data(file_path, delimiter=',', decimal='.', frequency_co
 
     Returns:
     - data: pandas DataFrame with the loaded data.
-    - largo_parche_values: list of 'largo_parche' values extracted from the column names.
+    - parameter_columns: list of column names for different parameter combinations.
+    - parameters: list of dictionaries containing 'ancho_parche' and 'largo_parche' values.
     """
     data = pd.read_csv(file_path, delimiter=delimiter, decimal=decimal)
 
     # Ensure the frequency column is numeric and properly scaled
     data[frequency_column] = pd.to_numeric(data[frequency_column])
 
-    # Extract 'largo_parche' values from column names
-    largo_parche_columns = [col for col in data.columns if 'largo_parche' in col]
-    largo_parche_values = []
-    for col in largo_parche_columns:
-        # Extract the 'largo_parche' value using string manipulation
-        # Assuming the format is: "dB(ActiveS(1:1)) [] - largo_parche='XXmm'"
-        start = col.find("largo_parche='") + len("largo_parche='")
-        end = col.find("mm'", start)
-        largo_parche = col[start:end]
-        largo_parche_values.append(largo_parche)
+    # Extract parameter columns
+    parameter_columns = [col for col in data.columns if col != frequency_column]
+    parameters = []
+    pattern = r"ancho_parche='(\d+\.?\d*)mm' largo_parche='(\d+\.?\d*)mm'"
 
-    return data, largo_parche_columns, largo_parche_values
+    for col in parameter_columns:
+        match = re.search(pattern, col)
+        if match:
+            ancho_parche = float(match.group(1))
+            largo_parche = float(match.group(2))
+            parameters.append({'column': col, 'ancho_parche': ancho_parche, 'largo_parche': largo_parche})
+        else:
+            parameters.append({'column': col, 'ancho_parche': None, 'largo_parche': None})
 
-def plot_s11_parametric_data(data, frequency_column, largo_parche_columns, largo_parche_values, xlabel='Frequency (GHz)', ylabel='S11 (dB)', title=None):
+    return data, parameters
+
+def plot_s11_parametric_data(data, frequency_column, parameters, xlabel='Frequency (GHz)', ylabel='S11 (dB)', title=None):
     """
     Plot S11 parametric data.
 
     Parameters:
     - data: pandas DataFrame containing the data.
     - frequency_column: name of the frequency column.
-    - largo_parche_columns: list of column names for different 'largo_parche' values.
-    - largo_parche_values: list of 'largo_parche' values corresponding to the columns.
+    - parameters: list of dictionaries containing parameter info for each column.
     - xlabel: label for the x-axis.
     - ylabel: label for the y-axis.
     - title: (optional) title of the plot.
     """
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 7))
 
-    # Generate a colormap with as many colors as there are datasets
-    num_datasets = len(largo_parche_columns)
-    colormap = cm.get_cmap('viridis', num_datasets)
+    # Sort parameters by 'ancho_parche' and 'largo_parche'
+    parameters_sorted = sorted(parameters, key=lambda x: (x['ancho_parche'], x['largo_parche']))
 
-    for idx, (col, largo_parche) in enumerate(zip(largo_parche_columns, largo_parche_values)):
-        # Plot each dataset with a color from the colormap
-        color = colormap(idx)
-        label = f"Largo Parche = {largo_parche} mm"
-        plt.plot(data[frequency_column], data[col], label=label, color=color)
+    # Get unique 'ancho_parche' and 'largo_parche' values
+    ancho_parche_values = sorted(set(p['ancho_parche'] for p in parameters_sorted if p['ancho_parche'] is not None))
+    largo_parche_values = sorted(set(p['largo_parche'] for p in parameters_sorted if p['largo_parche'] is not None))
+
+    colors = cm.get_cmap('viridis', len(ancho_parche_values))
+    linestyles = ['-', '--', '-.', ':']
+    markers = ['o', 's', '^', 'D']
+
+    # Map 'ancho_parche' to colors
+    ancho_parche_to_color = {ap: colors(i) for i, ap in enumerate(ancho_parche_values)}
+
+    # Map 'largo_parche' to line styles or markers
+    largo_parche_to_linestyle = {lp: linestyles[i % len(linestyles)] for i, lp in enumerate(largo_parche_values)}
+    largo_parche_to_marker = {lp: markers[i % len(markers)] for i, lp in enumerate(largo_parche_values)}
+
+    for p in parameters_sorted:
+        col = p['column']
+        ancho_parche = p['ancho_parche']
+        largo_parche = p['largo_parche']
+        if ancho_parche is not None and largo_parche is not None:
+            color = ancho_parche_to_color[ancho_parche]
+            linestyle = largo_parche_to_linestyle[largo_parche]
+            marker = largo_parche_to_marker[largo_parche]
+            label = f"W={int(ancho_parche)}mm, L={int(largo_parche)}mm"
+            plt.plot(
+                data[frequency_column], data[col], label=label, color=color,
+                linestyle=linestyle, marker=marker, markevery=2, linewidth=1
+            )
+        else:
+            plt.plot(data[frequency_column], data[col], label=col)
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     if title:
         plt.title(title)
     plt.grid(True)
-    plt.legend()
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
 
 
 def load_radiation_pattern(file_path, phi_column='Phi[deg]', theta_column='Theta[deg]', gain_column='dB10normalize(GainTotal)'):
