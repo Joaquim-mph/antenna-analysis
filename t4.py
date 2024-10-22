@@ -19,7 +19,7 @@ def main():
         file_path=file_path1,
         delimiter=',',
         decimal='.',  # Assuming decimal point is '.'
-        frequency_column='"Frequency"',
+        frequency_column='Frequency',
         s11_column='dB(ActiveS(1:1)) []',
         frequency_factor=1  # Frequency is already in GHz
     )

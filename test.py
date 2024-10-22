@@ -2,24 +2,16 @@ import pandas as pd
 import logging
 from utils import *
 import os
+import numpy as np
 
 # Configure the logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
     # Define the paths to the CSV files
-    file_path_measured = 'src/csv/pabloT4/medido_2_10Ghz.csv'
-    file_path_simulated = 'src/csv/pabloT4/S11_simulado_6GHz.csv'
-
-    # Check if the measured file exists
-    if not os.path.exists(file_path_measured):
-        logging.error(f"File {file_path_measured} does not exist.")
-        return
-    
-    # Check if the simulated file exists
-    if not os.path.exists(file_path_simulated):
-        logging.error(f"File {file_path_simulated} does not exist.")
-        return
+    file_path_measured = 'src/csv/pabloT4/S11_real_3G.csv'
+    file_path_simulated = 'src/csv/pabloT4/S11_simulado_23G.csv'
+    file_path_radiation = 'src/csv/pabloT4/pattern_2.csv'  # Radiation pattern file
 
     # Load the measured S11 data
     try:
@@ -36,6 +28,7 @@ def main():
     except Exception as e:
         logging.error(f"Error loading simulated data: {e}")
         return
+
 
     # Create the dataset information for plotting
     measured_dataset_info = {
@@ -58,9 +51,9 @@ def main():
         'color': 'red'
     }
 
-    # Call the plot function with both datasets
+
+    # Call the plot function with all three datasets
     plot_s11_datasets([measured_dataset_info, simulated_dataset_info], xlabel='Frequency (GHz)', ylabel='S11 (dB)', title='Measured vs Simulated S11 Data')
-    
     # Plot horizontal line at -10 dB threshold
     plot_horizontal_line(
         y_value=-10,  # The y-coordinate where you want the horizontal line
@@ -69,23 +62,32 @@ def main():
         linestyle='--',
         linewidth=1
     )
-    
+
     # Enable the grid
     plt.grid(True)
 
     # Set x-axis limits
-    plt.xlim(2, None)
-    
-    # Save the plot to a PDF file
-    output_file = "S11_real_vs_measured.pdf"
-    plt.savefig(output_file)
-    logging.info(f"Plot saved to {output_file}")
-    
-    # Show the plot
-    plt.show()
+    plt.xlim(2, 2.3)
 
+    # Save the S11 plot to a PDF file
+    plt.savefig("src/Img/T4/S11_real_vs_measured_short.pdf")
+    logging.info("S11 plot saved to S11_real_vs_measured_short.pdf")
+    
+    
+
+    # Convert spherical to Cartesian coordinates for 3D plotting
+
+    radiation_data, gain_linear = load_radiation_pattern(file_path_radiation)
+    x, y, z = spherical_to_cartesian(radiation_data['Theta[rad]'], radiation_data['Phi[rad]'], gain_linear)
+
+    # Plot the radiation pattern in 3D
+    plot_3d_radiation_pattern(x, y, z, c=gain_linear, cmap='inferno')
+    logging.info("Radiation pattern plot completed.")
+    
+    plt.savefig("src/Img/T4/pattern.pdf")
+    # Show the S11 plot
+    plt.show()
+    
 # Call the main function
 if __name__ == "__main__":
     main()
-
-

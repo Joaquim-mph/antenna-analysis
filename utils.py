@@ -133,7 +133,7 @@ def plot_s11_parametric_data(data, frequency_column, parameters, xlabel='Frequen
     - ylabel: label for the y-axis.
     - title: (optional) title of the plot.
     """
-    plt.figure(figsize=(10, 7))
+    plt.figure(figsize=(7, 5))
 
     # Sort parameters by 'ancho_parche' and 'largo_parche'
     parameters_sorted = sorted(parameters, key=lambda x: (x['ancho_parche'], x['largo_parche']))
@@ -215,7 +215,7 @@ def spherical_to_cartesian(theta_rad, phi_rad, r):
     z = r * np.cos(theta_rad)
     return x, y, z
 
-def plot_3d_radiation_pattern(x, y, z, c, cmap='viridis'):
+def plot_3d_radiation_pattern(x, y, z, c, cmap='magma'):
     """
     Plot a 3D radiation pattern.
 
@@ -224,14 +224,14 @@ def plot_3d_radiation_pattern(x, y, z, c, cmap='viridis'):
     - c: numpy array of values used for coloring the points (e.g., gain).
     - cmap: colormap to use for the scatter plot.
     """
-    fig = plt.figure(figsize=(10, 7))
+    fig = plt.figure(figsize=(7, 5))
     ax = fig.add_subplot(111, projection='3d')
     sc = ax.scatter(x, y, z, c=c, cmap=cmap)
     plt.colorbar(sc, ax=ax)
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    plt.show()
+
 
 
 def load_and_filter_s11_data(file_path, delimiter=',', decimal='.', frequency_column='Freq [GHz]', s11_threshold=-10):
