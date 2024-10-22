@@ -232,3 +232,92 @@ def plot_3d_radiation_pattern(x, y, z, c, cmap='viridis'):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     plt.show()
+
+
+def load_and_filter_s11_data(file_path, delimiter=',', decimal='.', frequency_column='Freq [GHz]', s11_threshold=-10):
+    """
+    Load S11 parametric data from a CSV file and filter datasets based on S11 threshold.
+
+    Parameters:
+    - file_path: path to the CSV file.
+    - delimiter: delimiter used in the CSV file.
+    - decimal: decimal point character in the CSV file.
+    - frequency_column: name of the frequency column.
+    - s11_threshold: S11 threshold in dB for filtering datasets.
+
+    Returns:
+    - data: pandas DataFrame with the loaded data.
+    - filtered_parameters: list of dictionaries containing parameter info for each filtered column.
+    """
+    data = pd.read_csv(file_path, delimiter=delimiter, decimal=decimal)
+
+    # Ensure the frequency column is numeric
+    data[frequency_column] = pd.to_numeric(data[frequency_column])
+
+    # Extract parameter columns
+    parameter_columns = [col for col in data.columns if col != frequency_column]
+    parameters = []
+    pattern = r"ancho_parche='(\d+\.?\d*)mm' largo_parche='(\d+\.?\d*)mm'"
+
+    for col in parameter_columns:
+        match = re.search(pattern, col)
+        if match:
+            ancho_parche = float(match.group(1))
+            largo_parche = float(match.group(2))
+            parameters.append({'column': col, 'ancho_parche': ancho_parche, 'largo_parche': largo_parche})
+        else:
+            parameters.append({'column': col, 'ancho_parche': None, 'largo_parche': None})
+
+    # Filter datasets where S11 is below the threshold at any frequency
+    filtered_parameters = []
+    for p in parameters:
+        col = p['column']
+        s11_values = data[col]
+        if (s11_values <= s11_threshold).any():
+            filtered_parameters.append(p)
+
+    return data, filtered_parameters
+
+
+def plot_filtered_s11_data(data, frequency_column, filtered_parameters, xlabel='Frequency (GHz)', ylabel='S11 (dB)', title=None):
+    """
+    Plot filtered S11 parametric data.
+
+    Parameters:
+    - data: pandas DataFrame containing the data.
+    - frequency_column: name of the frequency column.
+    - filtered_parameters: list of dictionaries containing parameter info for each filtered column.
+    - xlabel: label for the x-axis.
+    - ylabel: label for the y-axis.
+    - title: (optional) title of the plot.
+    """
+    plt.figure(figsize=(12, 8))
+
+    # Sort parameters for consistent plotting
+    parameters_sorted = sorted(filtered_parameters, key=lambda x: (x['ancho_parche'], x['largo_parche']))
+
+    # Assign colors and linestyles
+    num_datasets = len(parameters_sorted)
+    colormap = cm.get_cmap('viridis', num_datasets)
+    linestyles = ['-', '--', '-.', ':']
+
+    for idx, p in enumerate(parameters_sorted):
+        col = p['column']
+        ancho_parche = p['ancho_parche']
+        largo_parche = p['largo_parche']
+        color = colormap(idx)
+        linestyle = linestyles[idx % len(linestyles)]
+        label = f"W={ancho_parche}mm, L={largo_parche}mm"
+        plt.plot(
+            data[frequency_column], data[col], label=label, color=color,
+            linestyle=linestyle, linewidth=1
+        )
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    if title:
+        plt.title(title)
+    plt.grid(True)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    
