@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def main():
     # Define the paths to the CSV files
     file_path_measured = 'src/csv/pabloT4/S11_real_3G.csv'
-    file_path_simulated = 'src/csv/pabloT4/S11_simulado_23G.csv'
+    file_path_simulated = 'src/csv/pabloT4/S11_simulado_6GHz.csv'
     file_path_radiation = 'src/csv/pabloT4/pattern_2.csv'  # Radiation pattern file
 
     # Load the measured S11 data
@@ -67,7 +67,7 @@ def main():
     plt.grid(True)
 
     # Set x-axis limits
-    plt.xlim(2, 2.3)
+    plt.xlim(2, 3)
 
     # Save the S11 plot to a PDF file
     plt.savefig("src/Img/T4/S11_real_vs_measured_short.pdf")
@@ -87,6 +87,15 @@ def main():
     plt.savefig("src/Img/T4/pattern.pdf")
     # Show the S11 plot
     plt.show()
+    
+     # Load the radiation pattern data
+    data, gain_linear = load_radiation_pattern(file_path_radiation)
+
+    # Approximate the integral over the solid angle
+    integral_approx = integral_radiation_pattern(data, gain_linear)
+
+    print(f"Approximation of Omega_a: {integral_approx:.4f}")
+    print(f"Approximation of Directivity: {4*np.pi/integral_approx}")
     
 # Call the main function
 if __name__ == "__main__":

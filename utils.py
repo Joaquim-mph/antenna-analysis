@@ -321,3 +321,38 @@ def plot_filtered_s11_data(data, frequency_column, filtered_parameters, xlabel='
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     
+    
+def integral_radiation_pattern(data, gain_linear):
+    """
+    Approximate the integral of |F(theta, phi)|^2 * sin(theta) over the solid angle using
+    discrete radiation pattern data.
+
+    Parameters:
+    - data: pandas DataFrame with 'Phi[rad]' and 'Theta[rad]' columns.
+    - gain_linear: numpy array of linear gain values.
+
+    Returns:
+    - integral: Approximation of the integral.
+    """
+    # Extract theta and phi values in radians
+    theta_vals = data['Theta[rad]'].values
+    phi_vals = data['Phi[rad]'].values
+
+    # Use unique theta and phi values to calculate delta_theta and delta_phi
+    unique_theta_vals = np.unique(theta_vals)
+    unique_phi_vals = np.unique(phi_vals)
+
+    # Calculate the step sizes (assume uniform grid for theta and phi)
+    delta_theta = np.diff(unique_theta_vals).mean() if len(unique_theta_vals) > 1 else 1.0
+    delta_phi = np.diff(unique_phi_vals).mean() if len(unique_phi_vals) > 1 else 2 * np.pi
+
+    # Square the linear gain values (|F|^2)
+    gain_squared = gain_linear ** 2
+
+    # Compute the integrand |F(theta, phi)|^2 * sin(theta)
+    integrand = gain_squared * np.sin(theta_vals)
+
+    # Perform the integral using a discrete sum (trapezoidal rule approximation)
+    integral = np.sum(integrand) * delta_theta * delta_phi
+
+    return integral
