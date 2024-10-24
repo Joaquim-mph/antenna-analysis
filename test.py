@@ -1,7 +1,5 @@
-import pandas as pd
 import logging
 from utils import *
-import os
 import numpy as np
 
 # Configure the logger
@@ -73,8 +71,6 @@ def main():
     plt.savefig("src/Img/T4/S11_real_vs_measured_short.pdf")
     logging.info("S11 plot saved to S11_real_vs_measured_short.pdf")
     
-    
-
     # Convert spherical to Cartesian coordinates for 3D plotting
 
     radiation_data, gain_linear = load_radiation_pattern(file_path_radiation)
