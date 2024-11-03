@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import scienceplots
 from utils import (
     load_s11_data,
     load_s11_parametric_data,
@@ -11,7 +12,7 @@ from utils import (
 )
 
 
-
+plt.style.use('science')
 def main():
     # Load the S11 data from the first CSV file
     file_path1 = 'src/csv/pabloT4/medido_2_10Ghz.csv'  # Update the path if necessary

@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
+import scienceplots 
+
+plt.style.use(['science','nature'])
 
 # Load the CSV file (assuming it's in the same format as described)
 file_path = 'radiation_pattern.csv'
@@ -71,4 +74,4 @@ ax.grid(True)
 ax.legend(loc='upper right')
 
 # Show the plot
-plt.show()
+#plt.show()

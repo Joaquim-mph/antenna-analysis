@@ -1,7 +1,8 @@
 import logging
 from utils import *
 import numpy as np
-
+import scienceplots 
+plt.style.use(['science','ieee'])
 # Configure the logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
